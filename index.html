@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Voting Ketua OSIS</title>
+    <!-- Tailwind CSS untuk Desain Rapi -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JavaScript Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col justify-between font-sans">
+
+    <!-- Header -->
+    <header class="bg-blue-600 text-white shadow-md p-4 text-center">
+        <h1 class="text-xl font-bold">PEMILOS ONLINE SMA NEGERI</h1>
+        <p class="text-sm text-blue-100">Gunakan hak suara Anda dengan bijak!</p>
+    </header>
+
+    <!-- Konten Utama -->
+    <main class="container mx-auto p-4 max-w-md my-auto">
+        
+        <!-- STEP 1: HALAMAN LOGIN TOKEN -->
+        <div id="login-section" class="bg-white p-6 rounded-xl shadow-md">
+            <h2 class="text-lg font-semibold text-slate-800 mb-4 text-center">Masuk dengan Token Anda</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">Token Unik / NISN</label>
+                    <input type="text" id="token-input" placeholder="Contoh: TOKEN123" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none uppercase">
+                </div>
+                <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition">
+                    Mulai Memilih
+                </button>
+                <p id="login-error" class="text-red-500 text-sm text-center hidden"></p>
+            </div>
+        </div>
+
+        <!-- STEP 2: HALAMAN PILIH KANDIDAT -->
+        <div id="voting-section" class="hidden space-y-4">
+            <div class="bg-white p-4 rounded-xl shadow-md text-center">
+                <h2 class="font-bold text-slate-800">Halo, <span id="voter-name" class="text-blue-600"></span>!</h2>
+                <p class="text-xs text-slate-500">Silakan pilih salah satu kandidat di bawah ini:</p>
+            </div>
+            
+            <div id="candidates-container" class="space-y-4">
+                <!-- Kandidat akan dimuat otomatis di sini -->
+            </div>
+        </div>
+
+        <!-- STEP 3: HALAMAN SUKSES / TERIMAKASIH -->
+        <div id="success-section" class="hidden bg-white p-6 rounded-xl shadow-md text-center space-y-4">
+            <div class="text-green-600 text-5xl">✅</div>
+            <h2 class="text-xl font-bold text-slate-800">Suara Berhasil Direkam!</h2>
+            <p class="text-sm text-slate-600">Terima kasih telah berpartisipasi dalam Pemilihan Ketua OSIS ini.</p>
+            <button onclick="location.reload()" class="text-sm text-blue-600 underline font-medium">Keluar / Selesai</button>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center p-4 text-xs text-slate-400">
+        &copy; 2026 E-Voting OSIS System. All rights reserved.
+    </footer>
+
+    <!-- Logika Javascript -->
+    <script>
+        // ⚠️ MASUKKAN DATA SUPABASE ANDA DI SINI (DARI LANGKAH 2)
+        const SUPABASE_URL = https://ygzjtunzdogyzknahuoc.supabase.co/rest/v1/;
+        const SUPABASE_ANON_KEY = sb_secret_H45EmBuOOiAT94CWD6ohMQ_bzxHec9I;
+
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentVoter = null;
+
+        async function handleLogin() {
+            const token = document.getElementById('token-input').value.trim().toUpperCase();
+            const errorEl = document.getElementById('login-error');
+            
+            if (!token) {
+                errorEl.innerText = 'Mohon masukkan token Anda!';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            // Cek ke database tabel voters
+            const { data, error } = await supabaseClient
+                .from('voters')
+                .select('*')
+                .eq('token', token)
+                .single();
+
+            if (error || !data) {
+                errorEl.innerText = 'Token tidak valid atau tidak ditemukan!';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            if (data.has_voted) {
+                errorEl.innerText = 'Token ini sudah digunakan untuk memilih!';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            // Simpan sesi pemilih
+            currentVoter = data;
+            document.getElementById('voter-name').innerText = data.student_name;
+            
+            // Pindah tampilan ke halaman voting
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('voting-section').classList.remove('hidden');
+            loadCandidates();
+        }
+
+        async function loadCandidates() {
+            const { data, error } = await supabaseClient.from('candidates').select('*');
+            const container = document.getElementById('candidates-container');
+            container.innerHTML = '';
+
+            if (error) {
+                alert('Gagal memuat kandidat');
+                return;
+            }
+
+            data.forEach(cand => {
+                container.innerHTML += `
+                    <div class="bg-white p-4 rounded-xl shadow-md space-y-3">
+                        <img src="${cand.photo_url}" alt="Foto ${cand.name}" class="w-full h-40 object-cover rounded-lg">
+                        <h3 class="font-bold text-lg text-slate-800">${cand.name}</h3>
+                        <div class="text-xs text-slate-600 space-y-1">
+                            <p><strong>Visi:</strong> ${cand.vision}</p>
+                            <p><strong>Misi:</strong><br>${cand.mission.replace(/\n/g, '<br>')}</p>
+                        </div>
+                        <button onclick="submitVote(${cand.id})" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 rounded-lg transition">
+                            Pilih Kandidat Ini
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        async function submitVote(candidateId) {
+            if (!confirm('Apakah Anda yakin dengan pilihan Anda? Pilihan tidak dapat diubah.')) return;
+
+            // 1. Masukkan suara ke tabel votes
+            const { error: voteError } = await supabaseClient
+                .from('votes')
+                .insert([{ candidate_id: candidateId }]);
+
+            if (voteError) {
+                alert('Terjadi kesalahan saat mengirim suara.');
+                return;
+            }
+
+            // 2. Ubah status pemilih jadi sudah memilih (has_voted = true)
+            const { error: updateError } = await supabaseClient
+                .from('voters')
+                .update({ has_voted: true })
+                .eq('id', currentVoter.id);
+
+            if (updateError) {
+                alert('Gagal memperbarui status pemilih.');
+                return;
+            }
+
+            // Tampilkan halaman sukses
+            document.getElementById('voting-section').classList.add('hidden');
+            document.getElementById('success-section').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
