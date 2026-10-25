@@ -6,8 +6,11 @@
     <title>Live Election Results - OPPM & KGP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Chart.js library for Bar and Pie charts -->
+    
+    <!-- Chart.js Library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Plugin untuk Menampilkan Angka & Persentase di Atas/Dalam Grafik -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen p-6 font-sans">
 
@@ -28,7 +31,7 @@
         <!-- OPPM Chart Card -->
         <div class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
             <h2 class="text-lg font-bold text-blue-400 mb-4 text-center">President of OPPM Results</h2>
-            <div class="relative h-72">
+            <div class="relative h-80">
                 <canvas id="oppmChart"></canvas>
             </div>
         </div>
@@ -36,16 +39,19 @@
         <!-- KGP Chart Card -->
         <div class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
             <h2 class="text-lg font-bold text-amber-400 mb-4 text-center">Commander of KGP Results</h2>
-            <div class="relative h-72">
+            <div class="relative h-80">
                 <canvas id="kgpChart"></canvas>
             </div>
         </div>
     </main>
 
     <script>
-        // ⚠️ REPLACE WITH YOUR SUPABASE CREDENTIALS
+        // Registrasi plugin ChartDataLabels secara global
+        Chart.register(ChartDataLabels);
+
+        // ⚠️ MASUKKAN SUPABASE URL & ANON KEY ANDA DI SINI
         const SUPABASE_URL = 'https://ygzjtunzdogyzknahuoc.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_9NmwUGI_33ghyE0oJVPKjQ_RaXUN8cb'; 
+        const SUPABASE_ANON_KEY = 'sb_publishable_9NmwUGI_33ghyE0oJVPKjQ_RaXUN8cb';
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
@@ -54,20 +60,25 @@
         let kgpChartInstance = null;
 
         async function fetchAndRenderResults() {
-            const { data: candidates } = await supabaseClient.from('candidates').select('*');
-            const { data: votes } = await supabaseClient.from('votes').select('*');
+            const { data: candidates, error: candErr } = await supabaseClient.from('candidates').select('*').order('candidate_number');
+            const { data: votes, error: voteErr } = await supabaseClient.from('votes').select('*');
 
-            if (!candidates || !votes) return;
+            if (candErr || voteErr) {
+                console.error("Error fetching data:", candErr || voteErr);
+                return;
+            }
 
-            // Prepare OPPM Data
+            if (!candidates) return;
+
+            // Prepare OPPM Data (Menggunakan c.name langsung)
             const oppmCandidates = candidates.filter(c => c.category === 'OPPM');
-            const oppmLabels = oppmCandidates.map(c => `Candidate ${c.candidate_number}`);
-            const oppmData = oppmCandidates.map(c => votes.filter(v => v.candidate_id === c.id).length);
+            const oppmLabels = oppmCandidates.map(c => c.name);
+            const oppmData = oppmCandidates.map(c => votes ? votes.filter(v => v.candidate_id === c.id).length : 0);
 
-            // Prepare KGP Data
+            // Prepare KGP Data (Menggunakan c.name langsung)
             const kgpCandidates = candidates.filter(c => c.category === 'KGP');
-            const kgpLabels = kgpCandidates.map(c => `Candidate ${c.candidate_number}`);
-            const kgpData = kgpCandidates.map(c => votes.filter(v => v.candidate_id === c.id).length);
+            const kgpLabels = kgpCandidates.map(c => c.name);
+            const kgpData = kgpCandidates.map(c => votes ? votes.filter(v => v.candidate_id === c.id).length : 0);
 
             renderChart('oppmChart', oppmLabels, oppmData, 'OPPM Votes', ['#3b82f6', '#60a5fa', '#93c5fd']);
             renderChart('kgpChart', kgpLabels, kgpData, 'KGP Votes', ['#f59e0b', '#fbbf24', '#fde047']);
@@ -78,6 +89,9 @@
 
             if (canvasId === 'oppmChart' && oppmChartInstance) oppmChartInstance.destroy();
             if (canvasId === 'kgpChart' && kgpChartInstance) kgpChartInstance.destroy();
+
+            // Hitung total suara untuk kalkulasi persentase
+            const totalVotes = data.reduce((sum, val) => sum + val, 0);
 
             const chartConfig = {
                 type: currentChartType,
@@ -93,12 +107,43 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: currentChartType === 'bar' ? 25 : 10
+                        }
+                    },
                     plugins: {
-                        legend: { display: currentChartType === 'pie', position: 'bottom', labels: { color: '#fff' } }
+                        legend: { 
+                            display: currentChartType === 'pie', 
+                            position: 'bottom', 
+                            labels: { color: '#fff', font: { size: 12 } } 
+                        },
+                        // Fitur Angka & Persentase
+                        datalabels: {
+                            anchor: currentChartType === 'bar' ? 'end' : 'center',
+                            align: currentChartType === 'bar' ? 'top' : 'center',
+                            color: currentChartType === 'bar' ? '#38bdf8' : '#0f172a',
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            },
+                            formatter: (value) => {
+                                if (value === 0 && totalVotes === 0) return '0 (0%)';
+                                const percentage = totalVotes > 0 ? ((value / totalVotes) * 100).toFixed(1) : 0;
+                                return `${value} votes (${percentage}%)`;
+                            }
+                        }
                     },
                     scales: currentChartType === 'bar' ? {
-                        y: { beginAtZero: true, ticks: { color: '#94a3b8', stepSize: 1 } },
-                        x: { ticks: { color: '#94a3b8' } }
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { color: '#94a3b8', precision: 0 },
+                            grid: { color: '#334155' }
+                        },
+                        x: { 
+                            ticks: { color: '#94a3b8', font: { weight: 'bold' } },
+                            grid: { display: false }
+                        }
                     } : {}
                 }
             };
