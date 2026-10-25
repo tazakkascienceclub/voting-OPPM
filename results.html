@@ -9,7 +9,7 @@
     
     <!-- Chart.js Library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Plugin untuk Menampilkan Angka & Persentase di Atas/Dalam Grafik -->
+    <!-- Plugin untuk Menampilkan Label, Angka & Persentase -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen p-6 font-sans">
@@ -31,7 +31,7 @@
         <!-- OPPM Chart Card -->
         <div class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
             <h2 class="text-lg font-bold text-blue-400 mb-4 text-center">President of OPPM Results</h2>
-            <div class="relative h-80">
+            <div class="relative h-96">
                 <canvas id="oppmChart"></canvas>
             </div>
         </div>
@@ -39,17 +39,15 @@
         <!-- KGP Chart Card -->
         <div class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
             <h2 class="text-lg font-bold text-amber-400 mb-4 text-center">Commander of KGP Results</h2>
-            <div class="relative h-80">
+            <div class="relative h-96">
                 <canvas id="kgpChart"></canvas>
             </div>
         </div>
     </main>
 
     <script>
-        // Registrasi plugin ChartDataLabels secara global
         Chart.register(ChartDataLabels);
 
-        // ⚠️ MASUKKAN SUPABASE URL & ANON KEY ANDA DI SINI
         const SUPABASE_URL = 'https://ygzjtunzdogyzknahuoc.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_9NmwUGI_33ghyE0oJVPKjQ_RaXUN8cb';
 
@@ -70,12 +68,12 @@
 
             if (!candidates) return;
 
-            // Prepare OPPM Data (Menggunakan c.name langsung)
+            // Prepare OPPM Data
             const oppmCandidates = candidates.filter(c => c.category === 'OPPM');
             const oppmLabels = oppmCandidates.map(c => c.name);
             const oppmData = oppmCandidates.map(c => votes ? votes.filter(v => v.candidate_id === c.id).length : 0);
 
-            // Prepare KGP Data (Menggunakan c.name langsung)
+            // Prepare KGP Data
             const kgpCandidates = candidates.filter(c => c.category === 'KGP');
             const kgpLabels = kgpCandidates.map(c => c.name);
             const kgpData = kgpCandidates.map(c => votes ? votes.filter(v => v.candidate_id === c.id).length : 0);
@@ -90,7 +88,6 @@
             if (canvasId === 'oppmChart' && oppmChartInstance) oppmChartInstance.destroy();
             if (canvasId === 'kgpChart' && kgpChartInstance) kgpChartInstance.destroy();
 
-            // Hitung total suara untuk kalkulasi persentase
             const totalVotes = data.reduce((sum, val) => sum + val, 0);
 
             const chartConfig = {
@@ -109,7 +106,8 @@
                     maintainAspectRatio: false,
                     layout: {
                         padding: {
-                            top: currentChartType === 'bar' ? 25 : 10
+                            top: currentChartType === 'bar' ? 25 : 10,
+                            bottom: 10
                         }
                     },
                     plugins: {
@@ -118,19 +116,29 @@
                             position: 'bottom', 
                             labels: { color: '#fff', font: { size: 12 } } 
                         },
-                        // Fitur Angka & Persentase
                         datalabels: {
                             anchor: currentChartType === 'bar' ? 'end' : 'center',
                             align: currentChartType === 'bar' ? 'top' : 'center',
                             color: currentChartType === 'bar' ? '#38bdf8' : '#0f172a',
                             font: {
                                 weight: 'bold',
-                                size: 12
+                                size: 11
                             },
-                            formatter: (value) => {
-                                if (value === 0 && totalVotes === 0) return '0 (0%)';
+                            textAlign: 'center',
+                            formatter: (value, context) => {
+                                const candidateName = context.chart.data.labels[context.dataIndex];
                                 const percentage = totalVotes > 0 ? ((value / totalVotes) * 100).toFixed(1) : 0;
-                                return `${value} votes (${percentage}%)`;
+                                
+                                // Jika mode Pie Chart: Tampilkan [Nama Kandidat + Suara + Persentase]
+                                if (currentChartType === 'pie') {
+                                    if (value === 0 && totalVotes === 0) return `${candidateName}\n0 votes (0%)`;
+                                    return `${candidateName}\n${value} votes (${percentage}%)`;
+                                } 
+                                // Jika mode Bar Chart: Tampilkan [Suara + Persentase] saja (Nama sudah ada di sumbu X)
+                                else {
+                                    if (value === 0 && totalVotes === 0) return '0 (0%)';
+                                    return `${value} votes (${percentage}%)`;
+                                }
                             }
                         }
                     },
