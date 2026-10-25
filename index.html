@@ -3,78 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-Voting President OPPM</title>
-    <!-- Tailwind CSS for Neat Design -->
+    <title>E-Voting OPPM & KGP</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase JavaScript Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-100 min-h-screen flex flex-col justify-between font-sans">
 
     <!-- Header -->
-    <header class="bg-blue-600 text-white shadow-md p-4 text-center">
-        <h1 class="text-xl font-bold">OPPM TAZAKKA PRESIDENTIAL E-VOTING</h1>
-        <p class="text-sm text-blue-100">use your voting rights wisely!</p>
+    <header class="bg-blue-700 text-white shadow-lg p-5 text-center">
+        <h1 class="text-2xl font-bold uppercase tracking-wider">E-VOTING SYSTEM</h1>
+        <p class="text-xs text-blue-200 mt-1">President of OPPM & Commander of KGP</p>
     </header>
 
     <!-- Main Content -->
-    <main class="container mx-auto p-4 max-w-md my-auto">
+    <main class="container mx-auto p-4 md:p-6 my-auto max-w-6xl">
         
-        <!-- STEP 1: TOKEN LOGIN PAGE -->
-        <div id="login-section" class="bg-white p-6 rounded-xl shadow-md">
-            <h2 class="text-lg font-semibold text-slate-800 mb-4 text-center">Login with your PIN</h2>
+        <!-- STEP 1: LOGIN SECTION -->
+        <div id="login-section" class="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-xl">
+            <h2 class="text-xl font-bold text-slate-800 text-center mb-2">Voter Authentication</h2>
+            <p class="text-xs text-slate-500 text-center mb-6">Enter your unique PIN to start voting</p>
+            
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-600 mb-1">PIN</label>
-                    <input type="text" id="token-input" placeholder="Example: 1234" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none uppercase">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">YOUR PIN</label>
+                    <input type="text" id="token-input" placeholder="e.g. 1234" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none uppercase text-center font-mono text-lg font-bold">
                 </div>
-                <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition">
-                    CHOOSE YOUR PRESIDENT!
+                <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-md">
+                    LOGIN TO VOTE
                 </button>
-                <p id="login-error" class="text-red-500 text-sm text-center hidden"></p>
+                <p id="login-error" class="text-red-500 text-sm text-center font-medium hidden"></p>
             </div>
         </div>
 
-        <!-- STEP 2: CANDIDATE SELECTION PAGE -->
-        <div id="voting-section" class="hidden space-y-4">
+        <!-- STEP 2: VOTING SECTION -->
+        <div id="voting-section" class="hidden space-y-10">
             <div class="bg-white p-4 rounded-xl shadow-md text-center">
-                <h2 class="font-bold text-slate-800">Hello, <span id="voter-name" class="text-blue-600"></span>!</h2>
-                <p class="text-xs text-slate-500">Please select one candidate below:</p>
+                <h2 class="text-lg font-bold text-slate-800">Welcome, <span id="voter-name" class="text-blue-600"></span>!</h2>
+                <p class="text-xs text-slate-500">Cast your votes for both OPPM President and KGP Commander below.</p>
             </div>
-            
-            <div id="candidates-container" class="space-y-4">
-                <!-- Candidates will be automatically loaded here -->
+
+            <!-- OPPM SECTION -->
+            <div>
+                <div class="mb-4 border-l-4 border-blue-600 pl-3">
+                    <h2 class="text-xl font-bold text-slate-800">1. President of OPPM</h2>
+                    <p class="text-xs text-slate-500">Organisasi Pelajar Pondok Modern</p>
+                </div>
+                <!-- 3 Candidates Side-by-Side (1 Row) -->
+                <div id="oppm-candidates" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+            </div>
+
+            <!-- KGP SECTION -->
+            <div>
+                <div class="mb-4 border-l-4 border-amber-600 pl-3">
+                    <h2 class="text-xl font-bold text-slate-800">2. Commander of KGP</h2>
+                    <p class="text-xs text-slate-500">Koordinator Gerakan Pramuka</p>
+                </div>
+                <!-- 3 Candidates Side-by-Side (1 Row) -->
+                <div id="kgp-candidates" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
             </div>
         </div>
 
-        <!-- STEP 3: SUCCESS / THANK YOU PAGE -->
-        <div id="success-section" class="hidden bg-white p-6 rounded-xl shadow-md text-center space-y-4">
-            <div class="text-green-600 text-5xl">✅</div>
-            <h2 class="text-xl font-bold text-slate-800">Vote Successfully Recorded!</h2>
-            <p class="text-sm text-slate-600">Thank you for participating in this President of OPPM Election.</p>
-            <button onclick="location.reload()" class="text-sm text-blue-600 underline font-medium">Exit / Done</button>
+        <!-- STEP 3: SUCCESS SECTION -->
+        <div id="success-section" class="hidden max-w-md mx-auto bg-white p-8 rounded-2xl shadow-xl text-center space-y-4">
+            <div class="text-green-500 text-6xl">✅</div>
+            <h2 class="text-2xl font-bold text-slate-800">Votes Recorded!</h2>
+            <p class="text-sm text-slate-600">Thank you for participating in the OPPM & KGP elections.</p>
+            <button onclick="location.reload()" class="bg-blue-600 text-white font-semibold px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                Done / Exit
+            </button>
         </div>
 
     </main>
 
-    <!-- Footer -->
     <footer class="text-center p-4 text-xs text-slate-400">
-        &copy; 2026 E-Voting OPPM System. All rights reserved.
+        &copy; 2026 OPPM & KGP Election Committee. All rights reserved.
     </footer>
 
-    <!-- JavaScript Logic -->
     <script>
-        // ⚠️ ENTER YOUR SUPABASE DATA HERE
+        // ⚠️ REPLACE WITH YOUR SUPABASE CREDENTIALS
         const SUPABASE_URL = 'https://ygzjtunzdogyzknahuoc.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlnemp0dW56ZG9neXprbmFodW9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4MzU2MDcsImV4cCI6MjEwODQxMTYwN30.3wAnQ_bZIJKNfRpPzYqIrhqu-iYq2JcZ38nbx3UcknM';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
         let currentVoter = null;
+        let selectedOPPM = null;
+        let selectedKGP = null;
 
         async function handleLogin() {
             const token = document.getElementById('token-input').value.trim().toUpperCase();
             const errorEl = document.getElementById('login-error');
+            errorEl.classList.add('hidden');
             
             if (!token) {
                 errorEl.innerText = 'Please enter your PIN!';
@@ -82,7 +100,6 @@
                 return;
             }
 
-            // Check database voters table
             const { data, error } = await supabaseClient
                 .from('voters')
                 .select('*')
@@ -90,81 +107,97 @@
                 .single();
 
             if (error || !data) {
-                errorEl.innerText = 'PIN is invalid or not found!';
+                errorEl.innerText = 'Invalid PIN or voter not found!';
                 errorEl.classList.remove('hidden');
                 return;
             }
 
-            if (data.has_voted) {
+            if (data.has_voted_oppm && data.has_voted_kgp) {
                 errorEl.innerText = 'This PIN has already been used to vote!';
                 errorEl.classList.remove('hidden');
                 return;
             }
 
-            // Save voter session
             currentVoter = data;
             document.getElementById('voter-name').innerText = data.student_name;
-            
-            // Switch view to voting page
             document.getElementById('login-section').classList.add('hidden');
             document.getElementById('voting-section').classList.remove('hidden');
+            
             loadCandidates();
         }
 
         async function loadCandidates() {
-            const { data, error } = await supabaseClient.from('candidates').select('*');
-            const container = document.getElementById('candidates-container');
-            container.innerHTML = '';
+            const { data, error } = await supabaseClient.from('candidates').select('*').order('candidate_number');
+            if (error) return alert('Failed to load candidates');
 
-            if (error) {
-                alert('Failed to load candidates');
-                return;
-            }
+            const oppmContainer = document.getElementById('oppm-candidates');
+            const kgpContainer = document.getElementById('kgp-candidates');
+            oppmContainer.innerHTML = '';
+            kgpContainer.innerHTML = '';
 
             data.forEach(cand => {
-                container.innerHTML += `
-                    <div class="bg-white p-4 rounded-xl shadow-md space-y-3">
-                        <img src="${cand.photo_url}" alt="Photo of ${cand.name}" class="w-full h-40 object-cover rounded-lg">
-                        <h3 class="font-bold text-lg text-slate-800">${cand.name}</h3>
-                        <div class="text-xs text-slate-600 space-y-1">
-                            <p><strong>Vision:</strong> ${cand.vision}</p>
-                            <p><strong>Mission:</strong><br>${cand.mission.replace(/\n/g, '<br>')}</p>
+                const cardHtml = `
+                    <div class="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden flex flex-col justify-between p-4 space-y-3">
+                        <div>
+                            <img src="${cand.photo_url}" alt="${cand.name}" class="w-full h-48 object-cover rounded-lg mb-3">
+                            <span class="text-xs font-bold px-2 py-1 bg-slate-100 text-slate-700 rounded-md">Candidate ${cand.candidate_number}</span>
+                            <h3 class="font-bold text-lg text-slate-800 mt-1">${cand.name}</h3>
+                            <div class="text-xs text-slate-600 space-y-2 mt-2">
+                                <p><strong>Vision:</strong> ${cand.vision}</p>
+                                <p><strong>Mission:</strong><br>${cand.mission.replace(/\n/g, '<br>')}</p>
+                            </div>
                         </div>
-                        <button onclick="submitVote(${cand.id})" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 rounded-lg transition">
-                            Vote for This Candidate
+                        <button id="btn-${cand.category}-${cand.id}" onclick="selectCandidate('${cand.category}', ${cand.id})" class="w-full bg-slate-800 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition">
+                            Vote Choice
                         </button>
                     </div>
                 `;
+
+                if (cand.category === 'OPPM') oppmContainer.innerHTML += cardHtml;
+                else if (cand.category === 'KGP') kgpContainer.innerHTML += cardHtml;
             });
+
+            checkSubmitState();
         }
 
-        async function submitVote(candidateId) {
-            if (!confirm('Are you sure about your choice? Your choice cannot be changed.')) return;
+        function selectCandidate(category, id) {
+            if (category === 'OPPM') selectedOPPM = id;
+            if (category === 'KGP') selectedKGP = id;
 
-            // 1. Insert vote into votes table
-            const { error: voteError } = await supabaseClient
-                .from('votes')
-                .insert([{ candidate_id: candidateId }]);
+            // Highlight selected candidate button
+            document.querySelectorAll(`[id^="btn-${category}-"]`).forEach(btn => {
+                btn.classList.remove('bg-emerald-600');
+                btn.classList.add('bg-slate-800');
+                btn.innerText = 'Vote Choice';
+            });
 
-            if (voteError) {
-                alert('An error occurred while submitting your vote.');
-                return;
+            const activeBtn = document.getElementById(`btn-${category}-${id}`);
+            activeBtn.classList.remove('bg-slate-800');
+            activeBtn.classList.add('bg-emerald-600');
+            activeBtn.innerText = '✓ Selected';
+
+            submitVotes();
+        }
+
+        async function submitVotes() {
+            if (selectedOPPM && selectedKGP) {
+                setTimeout(async () => {
+                    if (!confirm('Are you sure with both your selections?')) return;
+
+                    const votesToInsert = [
+                        { category: 'OPPM', candidate_id: selectedOPPM },
+                        { category: 'KGP', candidate_id: selectedKGP }
+                    ];
+
+                    const { error: voteErr } = await supabaseClient.from('votes').insert(votesToInsert);
+                    if (voteErr) return alert('Failed to record votes.');
+
+                    await supabaseClient.from('voters').update({ has_voted_oppm: true, has_voted_kgp: true }).eq('id', currentVoter.id);
+
+                    document.getElementById('voting-section').classList.add('hidden');
+                    document.getElementById('success-section').classList.remove('hidden');
+                }, 300);
             }
-
-            // 2. Update voter status to has_voted = true
-            const { error: updateError } = await supabaseClient
-                .from('voters')
-                .update({ has_voted: true })
-                .eq('id', currentVoter.id);
-
-            if (updateError) {
-                alert('Failed to update voter status.');
-                return;
-            }
-
-            // Display success page
-            document.getElementById('voting-section').classList.add('hidden');
-            document.getElementById('success-section').classList.remove('hidden');
         }
     </script>
 </body>
